@@ -1,6 +1,3 @@
+const neuron = (props) => {};
 
-const neuron = (props) => {
-    
-}
-
-export default neuron
+export default neuron;

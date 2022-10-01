@@ -1,5 +1,5 @@
-import './App.css';
-import NeuralNet from './components/NeuralNet';
+import "./App.css";
+import NeuralNet from "./components/NeuralNet";
 
 function App() {
   return (
