@@ -3,6 +3,7 @@ import * as tf from "@tensorflow/tfjs";
 import * as tfvis from "@tensorflow/tfjs-vis";
 import Plot from "react-plotly.js";
 import { generateLinearSeparable } from "../scripts/data";
+import { Button } from "@chakra-ui/react";
 
 const colors = { 0: "red", 1: "blue" };
 
@@ -13,7 +14,7 @@ const NeuralNet = (props) => {
     labels: [],
   });
 
-  useEffect(() => {
+  const loadModel = () => {
     console.log("NeuralNet useEffect");
     const model = tf.sequential();
     model.add(tf.layers.dense({ units: 1, inputShape: [2] }));
@@ -30,28 +31,35 @@ const NeuralNet = (props) => {
     y.print();
     console.log(y.reshape([-1]).arraySync());
     console.log(points.labels.map((label) => colors[label]));
-  }, []);
+  };
+
+  useEffect(loadModel, []);
   return (
     <div>
-      <Plot
-        data={[
-          {
-            x: points.pointsX,
-            y: points.pointsY,
-            type: "scatter",
-            mode: "markers",
-            marker: { color: points.labels.map((label) => colors[label]) },
-          },
-        ]}
-        layout={{
-          width: 300,
-          height: 300,
-          xaxis: { range: [0, 1] },
-          yaxis: { range: [0, 1] },
-          showlegend: false,
-        }}
-        config={{ displayModeBar: false }}
-      />
+      <Button onClick={loadModel}>Reload</Button>
+      <div style={{ width: 300, height: 300 }}>
+        <Plot
+          data={[
+            {
+              x: points.pointsX,
+              y: points.pointsY,
+              type: "scatter",
+              mode: "markers",
+              marker: { color: points.labels.map((label) => colors[label]) },
+            },
+          ]}
+          style={{ width: "100%", height: "100%" }}
+          layout={{
+            xaxis: { range: [0, 1] },
+            yaxis: { range: [0, 1] },
+            showlegend: false,
+            autosize: false,
+            width: 500,
+            height: 500,
+          }}
+          config={{ displayModeBar: false }}
+        />
+      </div>
     </div>
   );
 };
