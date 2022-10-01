@@ -24,10 +24,17 @@ const NeuralNet = (props) => {
     // create model (don't train on data yet though)
     console.log("NeuralNet useEffect");
     const model = tf.sequential();
+    // model.add(
+    //   tf.layers.dense({ units: 4, inputShape: [2], activation: "relu" })
+    // );
     model.add(
-      tf.layers.dense({ units: 1, inputShape: [2], activation: "sigmoid" })
+      tf.layers.dense({
+        units: 1,
+        inputShape: [2],
+        activation: "sigmoid",
+        name: "output",
+      })
     );
-    // model.add(tf.layers.dense({ units: 1 }));
 
     // console.log(JSON.stringify(model.outputs[0].shape));
     // tfvis.show.modelSummary({name: 'Model Summary'}, model);
@@ -45,13 +52,13 @@ const NeuralNet = (props) => {
 
     // compile model
     model.compile({
-      optimizer: tf.train.sgd(0.2),
-      loss: tf.losses.meanSquaredError,
+      optimizer: tf.train.sgd(10),
+      loss: "binaryCrossentropy",
       metrics: ["mse"],
     });
 
-    const batchSize = 1;
-    const epochs = 100;
+    const batchSize = 5;
+    const epochs = 10;
 
     window.model = model;
 
@@ -69,11 +76,14 @@ const NeuralNet = (props) => {
       ),
     });
 
+    inputs.print();
+    labels.print();
+
     model.predict(inputs).print();
     const hmapNew = tf.zeros([n, n]).arraySync();
     for (let i = 0; i < n; i++) {
       for (let j = 0; j < n; j++) {
-        hmapNew[i][j] = model
+        hmapNew[j][i] = model
           .predict(tf.tensor2d([[i / n, j / n]]))
           .arraySync()[0][0];
       }
@@ -113,7 +123,7 @@ const NeuralNet = (props) => {
           config={{ displayModeBar: false }}
         />
       </div>
-      <div style={{ width: 300, height: 300 }}>
+      <div style={{ width: 300, height: 300, marginTop: 100 }}>
         <Plot
           data={[
             {
@@ -123,6 +133,15 @@ const NeuralNet = (props) => {
               type: "heatmap",
             },
           ]}
+          layout={{
+            xaxis: { range: [0, 1] },
+            yaxis: { range: [0, 1] },
+            showlegend: false,
+            autosize: false,
+            width: 300,
+            height: 300,
+          }}
+          config={{ displayModeBar: false }}
         ></Plot>
       </div>
     </div>
