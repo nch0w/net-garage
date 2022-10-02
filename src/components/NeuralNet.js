@@ -9,10 +9,12 @@ import _ from "underscore";
 import Plotter from "./Plotter";
 
 const colors = { 0: "blue", 1: "red" };
-const n = 30;
+const n = 15;
+const batchSize = 5;
+const learningRate = 10;
+
 const colorscaleValue = [
   [0, "#0000ff"],
-
   [1, "#ff0000"],
 ];
 
@@ -25,11 +27,14 @@ const NeuralNet = (props) => {
 
   const [model, setModel] = useState(null);
   const [hmap, setHmap] = useState(tf.zeros([n, n]).add(0.5).arraySync());
+  const [data, setData] = useState({});
+  const [loss, setLoss] = useState([]);
 
   const loadModel = async () => {
     // create model (don't train on data yet though)
-
     const { inputs, labels } = generateLinearSeparable();
+    setData({ inputs, labels });
+
     const pointsX = inputs
       .slice([0, 0], [inputs.shape[0], 1])
       .reshape([-1])
@@ -59,114 +64,90 @@ const NeuralNet = (props) => {
 
     // compile model
     model.compile({
-      optimizer: tf.train.sgd(10),
+      optimizer: tf.train.sgd(learningRate),
       loss: "binaryCrossentropy",
       metrics: ["accuracy"],
     });
 
-    const batchSize = 5;
-    const epochs = 10;
-
-    window.model = model;
-
-    // for (let i = 0; i < epochs; i++) {
-    //   const fit = await model.trainOnBatch(inputs, labels);
-    // }
-    const interval = setTimeout(async () => {
-      await model.fit(inputs, labels, {
-        batchSize,
-        epochs: 1,
-        shuffle: true,
-        // callbacks: tfvis.show.fitCallbacks(
-        //   { name: "Training Performance" },
-        //   ["loss"],
-        //   { height: 200, callbacks: ["onEpochEnd"] }
-        // ),
-      });
-
-      model.predict(inputs).print();
-      const hmapNew = tf.zeros([n, n]).arraySync();
-      for (let i = 0; i < n; i++) {
-        for (let j = 0; j < n; j++) {
-          hmapNew[j][i] = model
-            .predict(tf.tensor2d([[i / n, j / n]]))
-            .arraySync()[0][0];
-        }
-      }
-      setHmap(hmapNew);
-    }, 200);
-
-    inputs.print();
-    labels.print();
-
     setModel(model);
 
-    // y.print();
-    // console.log(y.reshape([-1]).arraySync());
-    // console.log(points.labels.map((label) => colors[label]));
+    // reset hmap
+    const hmapNew = tf.zeros([n, n]).add(0.5).arraySync();
+    setHmap(hmapNew);
+    setLoss([]);
   };
+
+  const fit = async () => {
+    const { inputs, labels } = data;
+
+    const fit = await model.fit(inputs, labels, {
+      batchSize,
+      epochs: 1,
+      shuffle: true,
+      callbacks: console.log,
+    });
+
+    setLoss((l) => [...l, fit.history.loss[0]]);
+
+    // model.predict(inputs).print();
+    const hmapNew = tf.zeros([n, n]).arraySync();
+    const sweepPoints = [];
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < n; j++) {
+        sweepPoints.push([i / n, j / n]);
+      }
+    }
+    const prediction = model.predict(tf.tensor2d(sweepPoints)).arraySync();
+    let counter = 0;
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < n; j++) {
+        hmapNew[i][j] = prediction[counter][0];
+        counter++;
+      }
+    }
+
+    setHmap(hmapNew);
+  };
+
+  console.log(_.range(1, loss.length + 1));
+  console.log(loss);
 
   useEffect(() => loadModel, []);
   return (
     <div>
-      <Button onClick={loadModel}>Reload Data</Button>
+      <Button onClick={loadModel} style={{ margin: 10 }}>
+        Regenerate Data
+      </Button>
+      <Button onClick={fit} style={{ margin: 10 }}>
+        Fit One Epoch
+      </Button>
       <Plotter points={points} hmap={hmap} width={200} height={200} />
-      {/* <div style={{ width: 300, height: 300 }}>
-        <Plot
-          data={
-            ([
-              {
-                z: hmap,
-                x: _.range(0, 1, 1 / n),
-                y: _.range(0, 1, 1 / n),
-                type: "heatmap",
-              },
-            ],
-            [
-              {
-                x: points.pointsX,
-                y: points.pointsY,
-                type: "scatter",
-                mode: "markers",
-                marker: { color: points.labels.map((label) => colors[label]) },
-                colorscale: colorscaleValue,
-                showscale: false,
-              },
-            ])
-          }
-          style={{ width: "100%", height: "100%" }}
-          layout={{
-            xaxis: { range: [0, 1] },
-            yaxis: { range: [0, 1] },
-            showlegend: false,
-            autosize: false,
-            width: 500,
-            height: 500,
-          }}
-          config={{ displayModeBar: false }}
-        />
-      </div>
-      {/* <div style={{ width: 300, height: 300, marginTop: 100 }}>
-        <Plot
-          data={[
-            {
-              z: hmap,
-              x: _.range(0, 1, 1 / n),
-              y: _.range(0, 1, 1 / n),
-              type: "heatmap",
-            },
-          ]}
-          layout={{
-            xaxis: { range: [0, 1] },
-            yaxis: { range: [0, 1] },
-            showlegend: false,
-            autosize: false,
-            width: 300,
-            height: 300,
-          }}
-          config={{ displayModeBar: false }}
-        ></Plot>
-      </div> */}
+      <Plot
+        data={[
+          {
+            x: _.range(0, loss.length),
+            y: loss,
+            type: "scatter",
+          },
+        ]}
+        style={{ width: "100%", height: "100%" }}
+        layout={{
+          // xaxis: { range: [0, 1] },
+          yaxis: { range: [0, 5] },
+          showlegend: false,
+          autosize: false,
+          width: 300,
+          height: 300,
+          title: "Loss (Binary Cross Entropy)",
+          margin: {
+            l: 30,
+            r: 30,
+            b: 30,
+            t: 30,
+          },
+        }}
+        config={{ displayModeBar: false }}
+      />
     </div>
   );
 };

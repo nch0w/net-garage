@@ -7,8 +7,6 @@ const RED = new Color("p3", [1, 0, 0]);
 const BLUE = new Color("p3", [0, 0, 1]);
 const BLUERED = BLUE.range(RED);
 
-console.log(RED.toString({ format: "rgba" }));
-
 const Plotter = (props) => {
   const { points, hmap } = props;
   const { pointsX, pointsY, labels } = points;
@@ -16,14 +14,13 @@ const Plotter = (props) => {
   const canvasRef = useRef(null);
 
   const draw = (ctx) => {
-    console.log(ctx.canvas.width, ctx.canvas.height);
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
     const originX = 20;
     const originY = ctx.canvas.height - 20;
 
-    const scaleX = (pX) => pX * (ctx.canvas.width - 40) + originX;
-    const scaleY = (pY) => originY - pY * (ctx.canvas.height - 40);
+    const scaleX = (pX) => pX * (ctx.canvas.width - 30) + originX;
+    const scaleY = (pY) => originY - pY * (ctx.canvas.height - 30);
 
     // axes
     ctx.fillStyle = "#000000";
@@ -42,7 +39,7 @@ const Plotter = (props) => {
     ctx.fillText("1", scaleX(1), originY + 16);
     ctx.fillText("1", originX - 12, scaleY(1));
     // hmap
-    ctx.globalAlpha = 0.2;
+    ctx.globalAlpha = 0.3;
     const n = hmap.length;
     _.range(n).forEach((i) => {
       _.range(n).forEach((j) => {
@@ -54,7 +51,7 @@ const Plotter = (props) => {
           scaleY(j / n) - scaleY((j + 1) / n)
         );
         // console.log(BLUERED(hmap[i][j]).to("srgb").toString());
-        ctx.fillStyle = BLUERED(hmap[j][i]).to("srgb").toString();
+        ctx.fillStyle = BLUERED(hmap[i][j]).to("srgb").toString();
         // ctx.fillStyle = "#ff0000";
         // ctx.fillStyle = `rgba(255*hmap[i][j], 0, 255*(1-hmap[i][j]), 0.2)`;
         ctx.fill();
