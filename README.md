@@ -1,6 +1,6 @@
 # net-garage
 
-Build a neural network from your browser and help it learn
+Build a neural network from your browser and help it learn (HackMIT 2022)
 
 [LIVE DEMO](https://nch0w.github.io/net-garage/)
 
