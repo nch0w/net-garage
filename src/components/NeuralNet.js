@@ -28,6 +28,13 @@ import {
   PopoverCloseButton,
   PopoverAnchor,
   Text,
+  Editable,
+  EditablePreview,
+  EditableInput,
+  Alert,
+  AlertIcon,
+  useBoolean,
+  useColorMode,
 } from "@chakra-ui/react";
 import { FaPlay, FaPause } from "react-icons/fa";
 import _ from "underscore";
@@ -36,14 +43,17 @@ import {
   AddIcon,
   InfoOutlineIcon,
   MinusIcon,
+  MoonIcon,
   RepeatIcon,
+  SunIcon,
 } from "@chakra-ui/icons";
 import Neuron from "./Neuron";
 import { layers } from "@tensorflow/tfjs";
+import { templateDark, templateLight } from "../scripts/plotlyTemplate";
 
 const n = 15;
 const batchSize = 5;
-const learningRate = 10;
+const defaultLearningRate = "0.1";
 const defaultLayerSizes = [1];
 
 // TODO make neural network configurable
@@ -59,6 +69,7 @@ const NeuralNet = (props) => {
   });
 
   const [model, setModel] = useState(null);
+  const [modelUpdated, setModelUpdated] = useBoolean(false);
   const [hmap, setHmap] = useState(tf.zeros([n, n]).add(0.5).arraySync());
   const [data, setData] = useState({});
   const [loss, setLoss] = useState([]);
@@ -66,6 +77,8 @@ const NeuralNet = (props) => {
   const [weights, setWeights] = useState([]);
   const [biases, setBiases] = useState([]);
   const [layerSizes, setLayerSizes] = useState(defaultLayerSizes);
+  const [learningRate, setLearningRate] = useState(defaultLearningRate);
+  const { colorMode, toggleColorMode } = useColorMode();
 
   // automatically fitting the model
   const [isPlaying, setIsPlaying] = useState(false);
@@ -96,6 +109,7 @@ const NeuralNet = (props) => {
   const loadModel = async () => {
     requestRef.isPlaying = false;
     setIsPlaying(false);
+    setModelUpdated.off();
 
     // create model code
     const model = tf.sequential({
@@ -118,9 +132,10 @@ const NeuralNet = (props) => {
 
     // tfvis.show.modelSummary({ name: "Model Summary" }, model);
 
+    console.log(learningRate);
     // compile model
     model.compile({
-      optimizer: tf.train.sgd(0.2),
+      optimizer: tf.train.sgd(parseFloat(learningRate)),
       loss: "binaryCrossentropy",
       metrics: ["accuracy"],
     });
@@ -188,18 +203,26 @@ const NeuralNet = (props) => {
     requestRef.current = requestAnimationFrame(play);
   };
 
+  const pause = () => {
+    requestRef.isPlaying = false;
+    cancelAnimationFrame(requestRef.current);
+    setIsPlaying(false);
+  };
+
   useEffect(() => {
     generateData();
   }, []);
 
-  window.weights = weights;
-
   return (
     <div>
-      <Stack direction="row" style={{ margin: 10 }} flexWrap="wrap">
+      <Stack direction="row" style={{ gap: 10 }} flexWrap="wrap">
         <Select
           width="10em"
-          onChange={(ev) => setSelectedDataModel(ev.target.value)}
+          onChange={(ev) => {
+            setModelUpdated.on();
+            pause();
+            setSelectedDataModel(ev.target.value);
+          }}
         >
           <option value="linear">Linear Data</option>
           <option value="circle">Circular Data</option>
@@ -233,6 +256,7 @@ const NeuralNet = (props) => {
             aria-label="refresh"
             icon={<RepeatIcon />}
             onClick={loadModel}
+            // colorScheme="{modelUpdated ? "blue" : "gray"}"
           />
           <Popover trigger="hover">
             <PopoverTrigger>
@@ -256,48 +280,81 @@ const NeuralNet = (props) => {
             </PopoverContent>
           </Popover>
 
-          <IconButton aria-label="add" icon={<AddIcon />} onClick={fit} />
+          <IconButton
+            aria-label="add"
+            icon={<AddIcon />}
+            onClick={fit}
+            disabled={modelUpdated}
+          />
           <IconButton
             aria-label="play"
             icon={<Icon as={isPlaying ? FaPause : FaPlay} />}
             onClick={
               isPlaying
-                ? () => {
-                    requestRef.isPlaying = false;
-                    cancelAnimationFrame(requestRef.current);
-                    setIsPlaying(false);
-                  }
+                ? pause
                 : () => {
                     setIsPlaying(true);
                     requestRef.isPlaying = true;
                     requestAnimationFrame(play);
                   }
             }
+            disabled={modelUpdated}
           />
         </ButtonGroup>
 
-        <Select
-          width="8em"
-          defaultValue={`${layerSizes.length}`}
-          onChange={(ev) => {
-            // leave the output layer alone, and add/truncate if necessary
-            const numLayers = ev.target.value;
-            if (numLayers < layerSizes.length) {
-              setLayerSizes([...layerSizes.slice(0, numLayers - 1), 1]);
-            } else if (numLayers > layerSizes.length) {
-              setLayerSizes([
-                ...layerSizes,
-                ...new Array(numLayers - layerSizes.length).fill(1),
-              ]);
-            }
-          }}
-        >
-          <option value="1">1 Layer</option>
-          <option value="2">2 Layers</option>
-          <option value="3">3 Layers</option>
-          <option value="4">4 Layers</option>
-          <option value="4">5 Layers</option>
-        </Select>
+        <Button>
+          Layers:
+          <Select
+            style={{ marginLeft: 10, width: "5em" }}
+            defaultValue={`${layerSizes.length}`}
+            variant="filled"
+            onChange={(ev) => {
+              // leave the output layer alone, and add/truncate if necessary
+              const numLayers = ev.target.value;
+              if (numLayers < layerSizes.length) {
+                setLayerSizes([...layerSizes.slice(0, numLayers - 1), 1]);
+              } else if (numLayers > layerSizes.length) {
+                setLayerSizes([
+                  ...layerSizes,
+                  ...new Array(numLayers - layerSizes.length).fill(1),
+                ]);
+              }
+              setModelUpdated.on();
+              pause();
+            }}
+          >
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </Select>
+        </Button>
+
+        <Button>
+          Learning Rate:
+          <Select
+            defaultValue={learningRate}
+            style={{ marginLeft: 10, width: "5em" }}
+            variant="filled"
+            onChange={(ev) => {
+              setLearningRate(parseFloat(ev.target.value));
+              setModelUpdated.on();
+              pause();
+            }}
+          >
+            <option value="0.002">0.002</option>
+            <option value="0.02">0.02</option>
+            <option value="0.1">0.1</option>
+            <option value="0.5">0.5</option>
+            <option value="5">5</option>
+          </Select>
+        </Button>
+
+        <IconButton
+          onClick={toggleColorMode}
+          icon={colorMode === "light" ? <MoonIcon /> : <SunIcon />}
+        ></IconButton>
       </Stack>
 
       <Stack direction="row" style={{ margin: 10 }}>
@@ -320,7 +377,10 @@ const NeuralNet = (props) => {
                                 lsNew[l] -= 1;
                                 return lsNew;
                               });
+                              setModelUpdated.on();
+                              pause();
                             }}
+                            disabled={layerSizes[l] === 1}
                             size="xs"
                           />
                           <IconButton
@@ -332,6 +392,8 @@ const NeuralNet = (props) => {
                                 lsNew[l] += 1;
                                 return lsNew;
                               });
+                              setModelUpdated.on();
+                              pause();
                             }}
                             size="xs"
                           />
@@ -411,6 +473,7 @@ const NeuralNet = (props) => {
                   text: "Epoch",
                 },
               },
+              template: colorMode === "light" ? templateLight : templateDark,
             }}
             config={{ displayModeBar: false }}
           />

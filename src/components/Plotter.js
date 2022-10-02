@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import _ from "underscore";
 import Color from "colorjs.io";
+import { useColorModeValue } from "@chakra-ui/react";
 
 const colors = { 0: "blue", 1: "red" };
 const RED = new Color("p3", [1, 0, 0]);
@@ -24,6 +25,7 @@ const getColor = (x) => {
 const Plotter = (props) => {
   const { points, hmap, title } = props;
   const { pointsX, pointsY, labels } = points;
+  const fontColor = useColorModeValue("#000000", "#ffffff");
 
   const canvasRef = useRef(null);
 
@@ -37,6 +39,7 @@ const Plotter = (props) => {
     const scaleY = (pY) => originY - pY * (ctx.canvas.height - 50);
 
     ctx.font = "18px Arial";
+    ctx.fillStyle = fontColor;
     ctx.fillText("Model Output", Math.floor(ctx.canvas.width / 2 - 50), 25);
 
     // hmap
@@ -77,7 +80,7 @@ const Plotter = (props) => {
     }
 
     // axes
-    ctx.fillStyle = "#000000";
+    ctx.fillStyle = fontColor;
     ctx.beginPath();
     ctx.moveTo(originX, originY);
     ctx.lineTo(ctx.canvas.width, originY);
