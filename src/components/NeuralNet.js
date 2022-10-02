@@ -44,6 +44,7 @@ import { layers } from "@tensorflow/tfjs";
 const n = 15;
 const batchSize = 5;
 const learningRate = 10;
+const defaultLayerSizes = [1];
 
 // TODO make neural network configurable
 // add learning rate controls
@@ -64,7 +65,7 @@ const NeuralNet = (props) => {
   const [selectedDataModel, setSelectedDataModel] = useState("linear");
   const [weights, setWeights] = useState([]);
   const [biases, setBiases] = useState([]);
-  const [layerSizes, setLayerSizes] = useState([4, 1]);
+  const [layerSizes, setLayerSizes] = useState(defaultLayerSizes);
 
   // automatically fitting the model
   const [isPlaying, setIsPlaying] = useState(false);
@@ -195,13 +196,13 @@ const NeuralNet = (props) => {
 
   return (
     <div>
-      <Stack direction="row" style={{ margin: 10 }}>
+      <Stack direction="row" style={{ margin: 10 }} flexWrap="wrap">
         <Select
-          width="8em"
+          width="10em"
           onChange={(ev) => setSelectedDataModel(ev.target.value)}
         >
-          <option value="linear">Linear</option>
-          <option value="circle">Circle</option>
+          <option value="linear">Linear Data</option>
+          <option value="circle">Circular Data</option>
         </Select>
 
         <Popover trigger="hover">
@@ -235,7 +236,7 @@ const NeuralNet = (props) => {
           />
           <Popover trigger="hover">
             <PopoverTrigger>
-              <Button style={{ width: "6em" }}>
+              <Button style={{ width: "7em" }}>
                 Epoch {loss.length}{" "}
                 <InfoOutlineIcon style={{ marginLeft: 8 }} />
               </Button>
@@ -274,6 +275,29 @@ const NeuralNet = (props) => {
             }
           />
         </ButtonGroup>
+
+        <Select
+          width="8em"
+          defaultValue={`${layerSizes.length}`}
+          onChange={(ev) => {
+            // leave the output layer alone, and add/truncate if necessary
+            const numLayers = ev.target.value;
+            if (numLayers < layerSizes.length) {
+              setLayerSizes([...layerSizes.slice(0, numLayers - 1), 1]);
+            } else if (numLayers > layerSizes.length) {
+              setLayerSizes([
+                ...layerSizes,
+                ...new Array(numLayers - layerSizes.length).fill(1),
+              ]);
+            }
+          }}
+        >
+          <option value="1">1 Layer</option>
+          <option value="2">2 Layers</option>
+          <option value="3">3 Layers</option>
+          <option value="4">4 Layers</option>
+          <option value="4">5 Layers</option>
+        </Select>
       </Stack>
 
       <Stack direction="row" style={{ margin: 10 }}>
@@ -327,11 +351,15 @@ const NeuralNet = (props) => {
                           <Neuron
                             num={row}
                             weights={
-                              weights.length
+                              weights.length && weights[layer]?.length
                                 ? weights[layer].map((w) => w[row])
                                 : []
                             }
-                            bias={biases.length ? biases[layer][row] : 0}
+                            bias={
+                              biases.length && biases[layer]?.length
+                                ? biases[layer][row]
+                                : 0
+                            }
                             key={layer}
                             desc={
                               layer == layerSizes.length - 1

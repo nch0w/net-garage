@@ -6,7 +6,7 @@ const Neuron = ({ weights, bias, num, desc }) => {
       <Text textTransform="uppercase" fontSize="md" fontWeight="bold">
         {`Neuron ${num}`}
       </Text>
-      <Stack direction="row">
+      <Stack direction="row" flexWrap="wrap">
         <Code colorScheme="transparent">Weights</Code>
         {weights &&
           weights.map((w, i) => (
@@ -17,7 +17,7 @@ const Neuron = ({ weights, bias, num, desc }) => {
             />
           ))}
       </Stack>
-      <Stack direction="row">
+      <Stack direction="row" flexWrap="wrap">
         <Code colorScheme="transparent">Bias</Code>
         <Code colorScheme="gray" children={`${bias?.toFixed(3)}`} />
         {desc && <Code colorScheme="transparent" children={desc} />}
