@@ -6,8 +6,6 @@ import { generateCircle, generateLinearSeparable } from "../scripts/data";
 import {
   Button,
   ButtonGroup,
-  Grid,
-  GridItem,
   Icon,
   IconButton,
   Select,
@@ -20,29 +18,37 @@ import {
   Th,
   Thead,
   Tr,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverHeader,
+  PopoverBody,
+  PopoverFooter,
+  PopoverArrow,
+  PopoverCloseButton,
+  PopoverAnchor,
+  Text,
 } from "@chakra-ui/react";
 import { FaPlay, FaPause } from "react-icons/fa";
-import { model } from "@tensorflow/tfjs";
 import _ from "underscore";
 import Plotter from "./Plotter";
 import {
   AddIcon,
-  ArrowRightIcon,
-  ChevronRightIcon,
-  RepeatClockIcon,
+  InfoOutlineIcon,
+  MinusIcon,
   RepeatIcon,
 } from "@chakra-ui/icons";
 import Neuron from "./Neuron";
+import { layers } from "@tensorflow/tfjs";
 
-const colors = { 0: "blue", 1: "red" };
 const n = 15;
 const batchSize = 5;
 const learningRate = 10;
 
-const colorscaleValue = [
-  [0, "#0000ff"],
-  [1, "#ff0000"],
-];
+// TODO make neural network configurable
+// add learning rate controls
+// add educational stuff, modal at beginning that explains everything
+// if time, mobile optimization
 
 const NeuralNet = (props) => {
   const [points, setPoints] = useState({
@@ -89,22 +95,27 @@ const NeuralNet = (props) => {
   const loadModel = async () => {
     requestRef.isPlaying = false;
     setIsPlaying(false);
-    const model = tf.sequential();
-    window.model = model;
-    model.add(
-      tf.layers.dense({ units: 4, inputShape: [2], activation: "relu" })
-    );
-    model.add(
-      tf.layers.dense({
-        units: 1,
-        // inputShape: [2],
-        activation: "sigmoid",
-        name: "output",
-      })
-    );
 
-    // console.log(JSON.stringify(model.outputs[0].shape));
-    // tfvis.show.modelSummary({name: 'Model Summary'}, model);
+    // create model code
+    const model = tf.sequential({
+      layers: [
+        ...layerSizes.slice(0, layerSizes.length - 1).map((sz, i) =>
+          tf.layers.dense({
+            units: sz,
+            activation: "relu",
+            inputShape: !i ? [2] : null,
+          })
+        ),
+        tf.layers.dense({
+          units: 1,
+          inputShape: layerSizes.length == 1 ? [2] : null,
+          activation: "sigmoid",
+          name: "output",
+        }),
+      ],
+    });
+
+    // tfvis.show.modelSummary({ name: "Model Summary" }, model);
 
     // compile model
     model.compile({
@@ -192,14 +203,58 @@ const NeuralNet = (props) => {
           <option value="linear">Linear</option>
           <option value="circle">Circle</option>
         </Select>
-        <Button onClick={generateData}>Generate</Button>
+
+        <Popover trigger="hover">
+          <PopoverTrigger>
+            <Button onClick={generateData}>
+              Generate <InfoOutlineIcon style={{ marginLeft: 8 }} />{" "}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent>
+            <PopoverArrow />
+            <PopoverHeader>
+              <Text textTransform="uppercase" fontWeight="bold">
+                Data Generation
+              </Text>
+            </PopoverHeader>
+            <PopoverBody>
+              In any neural network, it's essential to be training on
+              high-quality data. Real datasets can have a lot of noise and
+              dimensions that make it hard to see how the neural network is
+              training. In this example, we'll be randomly generating 2D data
+              that is linearly or radially separable.
+            </PopoverBody>
+          </PopoverContent>
+        </Popover>
+
         <ButtonGroup isAttached>
           <IconButton
             aria-label="refresh"
             icon={<RepeatIcon />}
             onClick={loadModel}
           />
-          <Button style={{ width: "5em" }}>Epoch {loss.length}</Button>
+          <Popover trigger="hover">
+            <PopoverTrigger>
+              <Button style={{ width: "6em" }}>
+                Epoch {loss.length}{" "}
+                <InfoOutlineIcon style={{ marginLeft: 8 }} />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent>
+              <PopoverArrow />
+              <PopoverHeader>
+                <Text textTransform="uppercase" fontWeight="bold">
+                  Epochs
+                </Text>
+              </PopoverHeader>
+              <PopoverBody>
+                An epoch is a complete pass of the training dataset done by
+                neural network. In this scenario, we train the model for 1 epoch
+                at a time, in batches of {batchSize} samples.
+              </PopoverBody>
+            </PopoverContent>
+          </Popover>
+
           <IconButton aria-label="add" icon={<AddIcon />} onClick={fit} />
           <IconButton
             aria-label="play"
@@ -228,7 +283,37 @@ const NeuralNet = (props) => {
               <Thead>
                 <Tr>
                   {_.range(layerSizes.length).map((l) => (
-                    <Th key={l}>{`Layer ${l}`}</Th>
+                    <Th key={l}>
+                      {`Layer ${l}`}{" "}
+                      {l < layerSizes.length - 1 && (
+                        <ButtonGroup isAttached>
+                          <IconButton
+                            aria-label="minus"
+                            icon={<MinusIcon />}
+                            onClick={() => {
+                              setLayerSizes((ls) => {
+                                const lsNew = [...ls];
+                                lsNew[l] -= 1;
+                                return lsNew;
+                              });
+                            }}
+                            size="xs"
+                          />
+                          <IconButton
+                            aria-label="add"
+                            icon={<AddIcon />}
+                            onClick={() => {
+                              setLayerSizes((ls) => {
+                                const lsNew = [...ls];
+                                lsNew[l] += 1;
+                                return lsNew;
+                              });
+                            }}
+                            size="xs"
+                          />
+                        </ButtonGroup>
+                      )}
+                    </Th>
                   ))}
                 </Tr>
               </Thead>

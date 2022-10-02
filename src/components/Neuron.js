@@ -12,14 +12,14 @@ const Neuron = ({ weights, bias, num, desc }) => {
           weights.map((w, i) => (
             <Code
               colorScheme={w > 0 ? "green" : "red"}
-              children={`${w.toFixed(3)}`}
+              children={`${w?.toFixed(3)}`}
               key={i}
             />
           ))}
       </Stack>
       <Stack direction="row">
         <Code colorScheme="transparent">Bias</Code>
-        <Code colorScheme="gray" children={`${bias.toFixed(3)}`} />
+        <Code colorScheme="gray" children={`${bias?.toFixed(3)}`} />
         {desc && <Code colorScheme="transparent" children={desc} />}
       </Stack>
     </Box>
