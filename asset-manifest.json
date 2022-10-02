@@ -1,16 +1,15 @@
 {
   "files": {
-    "main.css": "/neural-net/static/css/main.073c9b0a.css",
-    "main.js": "/neural-net/static/js/main.8e2dfcab.js",
+    "main.css": "/neural-net/static/css/main.1d29bbeb.css",
+    "main.js": "/neural-net/static/js/main.19b2cd5e.js",
     "static/js/787.5750179a.chunk.js": "/neural-net/static/js/787.5750179a.chunk.js",
-    "static/media/logo.svg": "/neural-net/static/media/logo.6ce24c58023cc2f8fd88fe9d219db6c6.svg",
     "index.html": "/neural-net/index.html",
-    "main.073c9b0a.css.map": "/neural-net/static/css/main.073c9b0a.css.map",
-    "main.8e2dfcab.js.map": "/neural-net/static/js/main.8e2dfcab.js.map",
+    "main.1d29bbeb.css.map": "/neural-net/static/css/main.1d29bbeb.css.map",
+    "main.19b2cd5e.js.map": "/neural-net/static/js/main.19b2cd5e.js.map",
     "787.5750179a.chunk.js.map": "/neural-net/static/js/787.5750179a.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.073c9b0a.css",
-    "static/js/main.8e2dfcab.js"
+    "static/css/main.1d29bbeb.css",
+    "static/js/main.19b2cd5e.js"
   ]
 }
