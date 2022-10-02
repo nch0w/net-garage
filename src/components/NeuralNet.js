@@ -6,9 +6,15 @@ import { generateLinearSeparable } from "../scripts/data";
 import { Button } from "@chakra-ui/react";
 import { model } from "@tensorflow/tfjs";
 import _ from "underscore";
+import Plotter from "./Plotter";
 
 const colors = { 0: "blue", 1: "red" };
 const n = 30;
+const colorscaleValue = [
+  [0, "#0000ff"],
+
+  [1, "#ff0000"],
+];
 
 const NeuralNet = (props) => {
   const [points, setPoints] = useState({
@@ -22,6 +28,18 @@ const NeuralNet = (props) => {
 
   const loadModel = async () => {
     // create model (don't train on data yet though)
+
+    const { inputs, labels } = generateLinearSeparable();
+    const pointsX = inputs
+      .slice([0, 0], [inputs.shape[0], 1])
+      .reshape([-1])
+      .arraySync();
+    const pointsY = inputs
+      .slice([0, 1], [inputs.shape[0], 1])
+      .reshape([-1])
+      .arraySync();
+    setPoints({ pointsX, pointsY, labels: labels.reshape([-1]).arraySync() });
+
     console.log("NeuralNet useEffect");
     const model = tf.sequential();
     // model.add(
@@ -39,22 +57,11 @@ const NeuralNet = (props) => {
     // console.log(JSON.stringify(model.outputs[0].shape));
     // tfvis.show.modelSummary({name: 'Model Summary'}, model);
 
-    const { inputs, labels } = generateLinearSeparable();
-    const pointsX = inputs
-      .slice([0, 0], [inputs.shape[0], 1])
-      .reshape([-1])
-      .arraySync();
-    const pointsY = inputs
-      .slice([0, 1], [inputs.shape[0], 1])
-      .reshape([-1])
-      .arraySync();
-    setPoints({ pointsX, pointsY, labels: labels.reshape([-1]).arraySync() });
-
     // compile model
     model.compile({
       optimizer: tf.train.sgd(10),
       loss: "binaryCrossentropy",
-      metrics: ["mse"],
+      metrics: ["accuracy"],
     });
 
     const batchSize = 5;
@@ -65,30 +72,33 @@ const NeuralNet = (props) => {
     // for (let i = 0; i < epochs; i++) {
     //   const fit = await model.trainOnBatch(inputs, labels);
     // }
-    const fit = await model.fit(inputs, labels, {
-      batchSize,
-      epochs,
-      shuffle: true,
-      callbacks: tfvis.show.fitCallbacks(
-        { name: "Training Performance" },
-        ["loss", "mse"],
-        { height: 200, callbacks: ["onEpochEnd"] }
-      ),
-    });
+    const interval = setTimeout(async () => {
+      await model.fit(inputs, labels, {
+        batchSize,
+        epochs: 1,
+        shuffle: true,
+        // callbacks: tfvis.show.fitCallbacks(
+        //   { name: "Training Performance" },
+        //   ["loss"],
+        //   { height: 200, callbacks: ["onEpochEnd"] }
+        // ),
+      });
+
+      model.predict(inputs).print();
+      const hmapNew = tf.zeros([n, n]).arraySync();
+      for (let i = 0; i < n; i++) {
+        for (let j = 0; j < n; j++) {
+          hmapNew[j][i] = model
+            .predict(tf.tensor2d([[i / n, j / n]]))
+            .arraySync()[0][0];
+        }
+      }
+      setHmap(hmapNew);
+    }, 200);
 
     inputs.print();
     labels.print();
 
-    model.predict(inputs).print();
-    const hmapNew = tf.zeros([n, n]).arraySync();
-    for (let i = 0; i < n; i++) {
-      for (let j = 0; j < n; j++) {
-        hmapNew[j][i] = model
-          .predict(tf.tensor2d([[i / n, j / n]]))
-          .arraySync()[0][0];
-      }
-    }
-    setHmap(hmapNew);
     setModel(model);
 
     // y.print();
@@ -100,17 +110,30 @@ const NeuralNet = (props) => {
   return (
     <div>
       <Button onClick={loadModel}>Reload Data</Button>
-      <div style={{ width: 300, height: 300 }}>
+      <Plotter points={points} hmap={hmap} width={200} height={200} />
+      {/* <div style={{ width: 300, height: 300 }}>
         <Plot
-          data={[
-            {
-              x: points.pointsX,
-              y: points.pointsY,
-              type: "scatter",
-              mode: "markers",
-              marker: { color: points.labels.map((label) => colors[label]) },
-            },
-          ]}
+          data={
+            ([
+              {
+                z: hmap,
+                x: _.range(0, 1, 1 / n),
+                y: _.range(0, 1, 1 / n),
+                type: "heatmap",
+              },
+            ],
+            [
+              {
+                x: points.pointsX,
+                y: points.pointsY,
+                type: "scatter",
+                mode: "markers",
+                marker: { color: points.labels.map((label) => colors[label]) },
+                colorscale: colorscaleValue,
+                showscale: false,
+              },
+            ])
+          }
           style={{ width: "100%", height: "100%" }}
           layout={{
             xaxis: { range: [0, 1] },
@@ -123,7 +146,7 @@ const NeuralNet = (props) => {
           config={{ displayModeBar: false }}
         />
       </div>
-      <div style={{ width: 300, height: 300, marginTop: 100 }}>
+      {/* <div style={{ width: 300, height: 300, marginTop: 100 }}>
         <Plot
           data={[
             {
@@ -143,7 +166,7 @@ const NeuralNet = (props) => {
           }}
           config={{ displayModeBar: false }}
         ></Plot>
-      </div>
+      </div> */}
     </div>
   );
 };
