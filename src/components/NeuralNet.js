@@ -35,6 +35,8 @@ import {
   AlertIcon,
   useBoolean,
   useColorMode,
+  Link,
+  Flex,
 } from "@chakra-ui/react";
 import { FaPlay, FaPause } from "react-icons/fa";
 import _ from "underscore";
@@ -50,14 +52,13 @@ import {
 import Neuron from "./Neuron";
 import { layers } from "@tensorflow/tfjs";
 import { templateDark, templateLight } from "../scripts/plotlyTemplate";
+import Popup from "./popup";
 
 const n = 15;
 const batchSize = 5;
 const defaultLearningRate = "0.1";
 const defaultLayerSizes = [1];
 
-// TODO make neural network configurable
-// add learning rate controls
 // add educational stuff, modal at beginning that explains everything
 // if time, mobile optimization
 
@@ -227,29 +228,19 @@ const NeuralNet = (props) => {
           <option value="linear">Linear Data</option>
           <option value="circle">Circular Data</option>
         </Select>
-
-        <Popover trigger="hover">
-          <PopoverTrigger>
-            <Button onClick={generateData}>
-              Generate <InfoOutlineIcon style={{ marginLeft: 8 }} />{" "}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent>
-            <PopoverArrow />
-            <PopoverHeader>
-              <Text textTransform="uppercase" fontWeight="bold">
-                Data Generation
-              </Text>
-            </PopoverHeader>
-            <PopoverBody>
-              In any neural network, it's essential to be training on
+        <Button onClick={generateData}>
+          Generate{" "}
+          <Popup
+            title="Data Generation"
+            description={`In any neural network, it's essential to be training on
               high-quality data. Real datasets can have a lot of noise and
               dimensions that make it hard to see how the neural network is
               training. In this example, we'll be randomly generating 2D data
-              that is linearly or radially separable.
-            </PopoverBody>
-          </PopoverContent>
-        </Popover>
+              that is linearly or radially separable.`}
+          >
+            <InfoOutlineIcon style={{ marginLeft: 8 }} />
+          </Popup>
+        </Button>
 
         <ButtonGroup isAttached>
           <IconButton
@@ -258,27 +249,18 @@ const NeuralNet = (props) => {
             onClick={loadModel}
             // colorScheme="{modelUpdated ? "blue" : "gray"}"
           />
-          <Popover trigger="hover">
-            <PopoverTrigger>
-              <Button style={{ width: "7em" }}>
-                Epoch {loss.length}{" "}
-                <InfoOutlineIcon style={{ marginLeft: 8 }} />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent>
-              <PopoverArrow />
-              <PopoverHeader>
-                <Text textTransform="uppercase" fontWeight="bold">
-                  Epochs
-                </Text>
-              </PopoverHeader>
-              <PopoverBody>
-                An epoch is a complete pass of the training dataset done by
-                neural network. In this scenario, we train the model for 1 epoch
-                at a time, in batches of {batchSize} samples.
-              </PopoverBody>
-            </PopoverContent>
-          </Popover>
+          <Button style={{ width: "7em" }}>
+            Epoch {loss.length}{" "}
+            <Popup
+              title="Epoch"
+              description={`An epoch is a complete pass of the training dataset done by
+                neural network. In this scenario, we fit the model on batches of
+                ${batchSize} samples until we reach the end of the epoch, and
+                then we move on to the next one.`}
+            >
+              <InfoOutlineIcon style={{ marginLeft: 8 }} />
+            </Popup>
+          </Button>
 
           <IconButton
             aria-label="add"
@@ -303,7 +285,14 @@ const NeuralNet = (props) => {
         </ButtonGroup>
 
         <Button>
-          Layers:
+          Layers
+          <Popup
+            title="Layers"
+            description={`A layer is a collection of neurons at one level in a sequential network. 
+              The layers span from the first layer, which takes in the raw features, to the last layer, which generates the output.`}
+          >
+            <InfoOutlineIcon style={{ marginLeft: 8 }} />
+          </Popup>
           <Select
             style={{ marginLeft: 10, width: "5em" }}
             defaultValue={`${layerSizes.length}`}
@@ -327,12 +316,18 @@ const NeuralNet = (props) => {
             <option value="2">2</option>
             <option value="3">3</option>
             <option value="4">4</option>
-            <option value="5">5</option>
           </Select>
         </Button>
 
         <Button>
-          Learning Rate:
+          Learning Rate
+          <Popup
+            title="Learning Rate"
+            description={`This neural network is trained using stochastic gradient descent (SGD).
+            Essentially, the model estimates the optimal direction to change its weights to decrease loss (given by the negative gradient). The learning rate is proportional to how much the network changes its weights in this direction. Try experimenting with slow and fast learning rates!`}
+          >
+            <InfoOutlineIcon style={{ marginLeft: 8 }} />
+          </Popup>
           <Select
             defaultValue={learningRate}
             style={{ marginLeft: 10, width: "5em" }}
@@ -357,8 +352,13 @@ const NeuralNet = (props) => {
         ></IconButton>
       </Stack>
 
-      <Stack direction="row" style={{ margin: 10 }}>
-        <div style={{ width: "100%" }}>
+      <Stack
+        direction="row"
+        style={{ margin: 10 }}
+        flexWrap="wrap"
+        justifyContent="space-between"
+      >
+        <div style={{ maxWidth: "100%" }}>
           <TableContainer>
             <Table variant="simple">
               <Thead>
@@ -479,6 +479,14 @@ const NeuralNet = (props) => {
           />
         </Stack>
       </Stack>
+
+      <Flex width="100%" justifyContent="center">
+        <Text fontSize="xs">
+          <Link href="https://github.com/nch0w/neural-net/">GitHub</Link> | Made
+          by Neil Chowdhury for{" "}
+          <Link href="https://hackmit.org/">HackMIT 2022</Link>
+        </Text>
+      </Flex>
     </div>
   );
 };
