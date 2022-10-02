@@ -6,10 +6,20 @@ import { generateCircle, generateLinearSeparable } from "../scripts/data";
 import {
   Button,
   ButtonGroup,
+  Grid,
+  GridItem,
   Icon,
   IconButton,
   Select,
   Stack,
+  Table,
+  TableCaption,
+  TableContainer,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
 } from "@chakra-ui/react";
 import { FaPlay, FaPause } from "react-icons/fa";
 import { model } from "@tensorflow/tfjs";
@@ -22,6 +32,7 @@ import {
   RepeatClockIcon,
   RepeatIcon,
 } from "@chakra-ui/icons";
+import Neuron from "./Neuron";
 
 const colors = { 0: "blue", 1: "red" };
 const n = 15;
@@ -45,12 +56,17 @@ const NeuralNet = (props) => {
   const [data, setData] = useState({});
   const [loss, setLoss] = useState([]);
   const [selectedDataModel, setSelectedDataModel] = useState("linear");
+  const [weights, setWeights] = useState([]);
+  const [biases, setBiases] = useState([]);
+  const [layerSizes, setLayerSizes] = useState([4, 1]);
 
   // automatically fitting the model
   const [isPlaying, setIsPlaying] = useState(false);
   const requestRef = useRef();
 
   const generateData = () => {
+    requestRef.isPlaying = false;
+    setIsPlaying(false);
     const dataGenerator = {
       linear: generateLinearSeparable,
       circle: generateCircle,
@@ -71,7 +87,10 @@ const NeuralNet = (props) => {
   };
 
   const loadModel = async () => {
+    requestRef.isPlaying = false;
+    setIsPlaying(false);
     const model = tf.sequential();
+    window.model = model;
     model.add(
       tf.layers.dense({ units: 4, inputShape: [2], activation: "relu" })
     );
@@ -100,6 +119,8 @@ const NeuralNet = (props) => {
     const hmapNew = tf.zeros([n, n]).add(0.5).arraySync();
     setHmap(hmapNew);
     setLoss([]);
+    setWeights(model.layers.map((l) => l.getWeights()[0].arraySync()));
+    setBiases(model.layers.map((l) => l.getWeights()[1].arraySync()));
   };
 
   const fit = async () => {
@@ -122,6 +143,11 @@ const NeuralNet = (props) => {
     }
 
     setLoss((l) => [...l, fitOne.history.loss[0]]);
+    setWeights(model.layers.map((l) => l.getWeights()[0].arraySync()));
+    setBiases(model.layers.map((l) => l.getWeights()[1].arraySync()));
+    // setModel(model);
+
+    // window.fitOne = fitOne;
 
     // model.predict(inputs).print();
     const hmapNew = tf.zeros([n, n]).arraySync();
@@ -153,6 +179,9 @@ const NeuralNet = (props) => {
   useEffect(() => {
     generateData();
   }, []);
+
+  window.weights = weights;
+
   return (
     <div>
       <Stack direction="row" style={{ margin: 10 }}>
@@ -193,6 +222,47 @@ const NeuralNet = (props) => {
       </Stack>
 
       <Stack direction="row" style={{ margin: 10 }}>
+        <div style={{ width: "100%" }}>
+          <TableContainer>
+            <Table variant="simple">
+              <Thead>
+                <Tr>
+                  {_.range(layerSizes.length).map((l) => (
+                    <Th key={l}>{`Layer ${l}`}</Th>
+                  ))}
+                </Tr>
+              </Thead>
+              <Tbody>
+                {_.range(Math.max(...layerSizes)).map((row) => (
+                  <Tr key={row}>
+                    {_.range(layerSizes.length).map((layer) => (
+                      <Td key={layer}>
+                        {row < layerSizes[layer] && (
+                          // <div>hi</div>
+                          <Neuron
+                            num={row}
+                            weights={
+                              weights.length
+                                ? weights[layer].map((w) => w[row])
+                                : []
+                            }
+                            bias={biases.length ? biases[layer][row] : 0}
+                            key={layer}
+                            desc={
+                              layer == layerSizes.length - 1
+                                ? "Sigmoid"
+                                : "ReLu"
+                            }
+                          />
+                        )}
+                      </Td>
+                    ))}
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+          </TableContainer>
+        </div>
         <Stack direction="column" maxWidth={300}>
           <Plotter points={points} hmap={hmap} width={300} height={320} />
           <Plot
