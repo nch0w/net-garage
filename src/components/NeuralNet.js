@@ -163,7 +163,7 @@ const NeuralNet = (props) => {
           <option value="linear">Linear</option>
           <option value="circle">Circle</option>
         </Select>
-        <Button onClick={generateData}>Generate Data</Button>
+        <Button onClick={generateData}>Generate</Button>
         <ButtonGroup isAttached>
           <IconButton
             aria-label="refresh"
@@ -192,43 +192,47 @@ const NeuralNet = (props) => {
         </ButtonGroup>
       </Stack>
 
-      <Plotter points={points} hmap={hmap} width={200} height={200} />
-      <Plot
-        data={[
-          {
-            x: _.range(0, loss.length),
-            y: loss,
-            type: "scatter",
-          },
-        ]}
-        style={{ width: "100%", height: "100%" }}
-        layout={{
-          // xaxis: { range: [0, 1] },
-          showlegend: false,
-          autosize: false,
-          width: 300,
-          height: 300,
-          title: "Loss",
-          margin: {
-            l: 30,
-            r: 30,
-            b: 30,
-            t: 30,
-          },
-          yaxis: {
-            title: {
-              text: "Binary Cross Entropy",
-            },
-            range: [0, 2],
-          },
-          xaxis: {
-            title: {
-              text: "Epoch",
-            },
-          },
-        }}
-        config={{ displayModeBar: false }}
-      />
+      <Stack direction="row" style={{ margin: 10 }}>
+        <Stack direction="column" maxWidth={300}>
+          <Plotter points={points} hmap={hmap} width={300} height={320} />
+          <Plot
+            data={[
+              {
+                x: _.range(0, loss.length),
+                y: loss,
+                type: "scatter",
+              },
+            ]}
+            style={{ width: "100%", height: "100%" }}
+            layout={{
+              // xaxis: { range: [0, 1] },
+              showlegend: false,
+              autosize: false,
+              width: 300,
+              height: 300,
+              title: "Training Loss",
+              margin: {
+                l: 30,
+                r: 30,
+                b: 30,
+                t: 30,
+              },
+              yaxis: {
+                title: {
+                  text: "Binary Cross Entropy",
+                },
+                range: [0, 2],
+              },
+              xaxis: {
+                title: {
+                  text: "Epoch",
+                },
+              },
+            }}
+            config={{ displayModeBar: false }}
+          />
+        </Stack>
+      </Stack>
     </div>
   );
 };

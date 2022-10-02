@@ -16,7 +16,7 @@ export const generateLinearSeparable = () => {
 };
 
 export const generateCircle = () => {
-  const n1 = 20;
+  const n1 = 50;
   const points0 = [];
   const points1 = [];
   const labels0 = [];
