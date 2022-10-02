@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as tf from "@tensorflow/tfjs";
 import * as tfvis from "@tensorflow/tfjs-vis";
 import Plot from "react-plotly.js";
@@ -6,12 +6,12 @@ import { generateCircle, generateLinearSeparable } from "../scripts/data";
 import {
   Button,
   ButtonGroup,
+  Icon,
   IconButton,
-  Radio,
-  RadioGroup,
   Select,
   Stack,
 } from "@chakra-ui/react";
+import { FaPlay, FaPause } from "react-icons/fa";
 import { model } from "@tensorflow/tfjs";
 import _ from "underscore";
 import Plotter from "./Plotter";
@@ -46,6 +46,10 @@ const NeuralNet = (props) => {
   const [loss, setLoss] = useState([]);
   const [selectedDataModel, setSelectedDataModel] = useState("linear");
 
+  // automatically fitting the model
+  const [isPlaying, setIsPlaying] = useState(false);
+  const requestRef = useRef();
+
   const generateData = () => {
     const dataGenerator = {
       linear: generateLinearSeparable,
@@ -68,13 +72,13 @@ const NeuralNet = (props) => {
 
   const loadModel = async () => {
     const model = tf.sequential();
-    // model.add(
-    //   tf.layers.dense({ units: 4, inputShape: [2], activation: "relu" })
-    // );
+    model.add(
+      tf.layers.dense({ units: 4, inputShape: [2], activation: "relu" })
+    );
     model.add(
       tf.layers.dense({
         units: 1,
-        inputShape: [2],
+        // inputShape: [2],
         activation: "sigmoid",
         name: "output",
       })
@@ -85,7 +89,7 @@ const NeuralNet = (props) => {
 
     // compile model
     model.compile({
-      optimizer: tf.train.sgd(learningRate),
+      optimizer: tf.train.sgd(0.2),
       loss: "binaryCrossentropy",
       metrics: ["accuracy"],
     });
@@ -138,6 +142,14 @@ const NeuralNet = (props) => {
 
     setHmap(hmapNew);
   };
+
+  const play = async (time) => {
+    if (!requestRef.isPlaying) return;
+    // automatically fit the model
+    await fit();
+    requestRef.current = requestAnimationFrame(play);
+  };
+
   useEffect(() => {
     generateData();
   }, []);
@@ -160,7 +172,23 @@ const NeuralNet = (props) => {
           />
           <Button style={{ width: "5em" }}>Epoch {loss.length}</Button>
           <IconButton aria-label="add" icon={<AddIcon />} onClick={fit} />
-          {/* <IconButton aria-label="play" icon={<ArrowRightIcon />} /> */}
+          <IconButton
+            aria-label="play"
+            icon={<Icon as={isPlaying ? FaPause : FaPlay} />}
+            onClick={
+              isPlaying
+                ? () => {
+                    requestRef.isPlaying = false;
+                    cancelAnimationFrame(requestRef.current);
+                    setIsPlaying(false);
+                  }
+                : () => {
+                    setIsPlaying(true);
+                    requestRef.isPlaying = true;
+                    requestAnimationFrame(play);
+                  }
+            }
+          />
         </ButtonGroup>
       </Stack>
 
@@ -191,7 +219,7 @@ const NeuralNet = (props) => {
             title: {
               text: "Binary Cross Entropy",
             },
-            range: [0, 5],
+            range: [0, 2],
           },
           xaxis: {
             title: {
