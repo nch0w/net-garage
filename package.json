@@ -1,7 +1,7 @@
 {
   "name": "neural-net",
   "version": "0.1.0",
-  "homepage": "https://nch0w.github.io/neural-net",
+  "homepage": "https://nch0w.github.io/net-garage",
   "private": true,
   "dependencies": {
     "@chakra-ui/icons": "^2.0.10",
