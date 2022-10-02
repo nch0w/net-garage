@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/neural-net/static/css/main.1d29bbeb.css",
-    "main.js": "/neural-net/static/js/main.48c77289.js",
+    "main.js": "/neural-net/static/js/main.9821ff60.js",
     "static/js/787.5750179a.chunk.js": "/neural-net/static/js/787.5750179a.chunk.js",
     "index.html": "/neural-net/index.html",
     "main.1d29bbeb.css.map": "/neural-net/static/css/main.1d29bbeb.css.map",
-    "main.48c77289.js.map": "/neural-net/static/js/main.48c77289.js.map",
+    "main.9821ff60.js.map": "/neural-net/static/js/main.9821ff60.js.map",
     "787.5750179a.chunk.js.map": "/neural-net/static/js/787.5750179a.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.1d29bbeb.css",
-    "static/js/main.48c77289.js"
+    "static/js/main.9821ff60.js"
   ]
 }
